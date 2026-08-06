@@ -51,6 +51,9 @@ class IsaaclabStackCubeEnv(IsaaclabBaseEnv):
             from isaaclab.app import AppLauncher
 
             sim_app = AppLauncher(headless=True, enable_cameras=True).app
+            from embodied_fusion.rlinf.isaaclab_stack_cube_rewarded import register_task
+
+            register_task()
             from isaaclab_tasks.utils import load_cfg_from_registry
 
             isaac_env_cfg = load_cfg_from_registry(
