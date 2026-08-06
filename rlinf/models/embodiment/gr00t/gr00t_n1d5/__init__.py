@@ -18,6 +18,40 @@ from omegaconf import DictConfig
 from .npu_patches import apply_npu_patches, restore_npu_patches
 
 
+def _patch_transformers_for_isaac_gr00t() -> None:
+    """Bridge aliases used by Isaac-GR00T's remote Eagle processor.
+
+    Isaac-GR00T's cached processor is copied from a newer Transformers
+    revision than the IsaacLab-pinned Transformers release.  These names are
+    type aliases/docstrings only; adding them keeps the shared IsaacLab
+    environment on its required Transformers version.
+    """
+
+    import transformers.image_processing_utils_fast as fast_image_utils
+    import transformers.image_utils as image_utils
+    from transformers.processing_utils import ProcessorMixin
+
+    if not hasattr(image_utils, "VideoInput"):
+        image_utils.VideoInput = image_utils.ImageInput
+    if not hasattr(fast_image_utils, "BASE_IMAGE_PROCESSOR_FAST_DOCSTRING"):
+        fast_image_utils.BASE_IMAGE_PROCESSOR_FAST_DOCSTRING = ""
+    if not hasattr(fast_image_utils, "BASE_IMAGE_PROCESSOR_FAST_DOCSTRING_PREPROCESS"):
+        fast_image_utils.BASE_IMAGE_PROCESSOR_FAST_DOCSTRING_PREPROCESS = ""
+
+    # The cached Eagle processor follows the pre-4.57 return contract of this
+    # helper (unused kwargs only), while current Transformers returns
+    # ``(unused_kwargs, valid_kwargs)``.
+    if not getattr(ProcessorMixin, "_rlinf_isaac_gr00t_compat", False):
+        original_validate = ProcessorMixin.validate_init_kwargs
+
+        def validate_init_kwargs_compat(processor_config, valid_kwargs):
+            result = original_validate(processor_config, valid_kwargs)
+            return result[0] if isinstance(result, tuple) else result
+
+        ProcessorMixin.validate_init_kwargs = staticmethod(validate_init_kwargs_compat)
+        ProcessorMixin._rlinf_isaac_gr00t_compat = True
+
+
 def get_model(cfg: DictConfig, torch_dtype=torch.bfloat16):
     from pathlib import Path
 
@@ -38,6 +72,7 @@ def get_model(cfg: DictConfig, torch_dtype=torch.bfloat16):
     npu_patch_state = apply_npu_patches(Patcher)
     Patcher.apply()
     try:
+        _patch_transformers_for_isaac_gr00t()
         from gr00t.experiment.data_config import load_data_config
 
         from rlinf.models.embodiment.gr00t.gr00t_n1d5.gr00t_action_model import (
