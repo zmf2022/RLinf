@@ -13,9 +13,13 @@
 # limitations under the License.
 
 import json
+import sys
+from datetime import datetime
+from pathlib import Path
 
 import hydra
 import torch.multiprocessing as mp
+from omegaconf import open_dict
 from omegaconf.omegaconf import OmegaConf
 
 from rlinf.config import validate_cfg
@@ -28,6 +32,10 @@ from rlinf.workers.rollout.hf.huggingface_worker import MultiStepRolloutWorker
 
 mp.set_start_method("spawn", force=True)
 
+_GUI_FLAG = "--gui" in sys.argv
+if _GUI_FLAG:
+    sys.argv.remove("--gui")
+
 
 @hydra.main(
     version_base="1.1",
@@ -35,7 +43,17 @@ mp.set_start_method("spawn", force=True)
     config_name="libero_spatial_starvla_eval",
 )
 def main(cfg) -> None:
+    run_id = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    cfg.runner.logger.log_path = str(
+        Path(cfg.runner.logger.log_path)
+        / run_id
+        / f"eval-{datetime.now():%Y%m%d-%H%M%S-%f}"
+    )
     cfg.runner.task_type = "embodied_eval"
+    cfg.runner.only_eval = True
+    if _GUI_FLAG:
+        with open_dict(cfg.env.eval):
+            cfg.env.eval.gui = True
     cfg = validate_cfg(cfg)
     print(json.dumps(OmegaConf.to_container(cfg, resolve=True), indent=2))
 

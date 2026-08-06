@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import json
+from datetime import datetime
+from pathlib import Path
 
 import hydra
 import torch.multiprocessing as mp
@@ -32,10 +34,18 @@ mp.set_start_method("spawn", force=True)
 _REWARD_SERVER_COMPONENT_NAME = "reward_server"
 
 
+def _set_run_log_path(cfg, stage: str) -> None:
+    run_id = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    cfg.runner.logger.log_path = str(
+        Path(cfg.runner.logger.log_path) / run_id / stage
+    )
+
+
 @hydra.main(
     version_base="1.1", config_path="config", config_name="maniskill_ppo_openvlaoft"
 )
 def main(cfg) -> None:
+    _set_run_log_path(cfg, "train")
     cfg = validate_cfg(cfg)
     print(json.dumps(OmegaConf.to_container(cfg, resolve=True), indent=2))
 

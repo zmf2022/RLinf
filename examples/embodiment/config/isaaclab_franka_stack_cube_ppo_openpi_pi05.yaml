@@ -2,6 +2,7 @@ defaults:
   - env/isaaclab_stack_cube@env.train
   - env/isaaclab_stack_cube@env.eval
   - model/pi0_5@actor.model
+  - model/pi0_5@rollout.model
   - hybrid_engines/fsdp@actor.fsdp_config
   - weight_syncer/patch_syncer@weight_syncer
   - override hydra/job_logging: stdout
@@ -21,7 +22,7 @@ cluster:
 runner:
   task_type: embodied
   logger:
-    log_path: "../results"
+    log_path: "embodied_fusion_logs/rlinf/isaaclab_franka_stack_cube_ppo_openpi_pi05"
     project_name: rlinf
     experiment_name: "isaaclab_ppo_openpi_pi05"
     logger_backends: ["tensorboard"] # wandb, swanlab
@@ -97,6 +98,14 @@ rollout:
 
   model:
     model_path: "/path/to/model/RLinf-pi05-SFT-Stack-cube" # https://huggingface.co/YifWRobotics/RLinf-pi05-SFT-Stack-cube
+    model_type: "openpi"
+    num_action_chunks: 5
+    action_dim: 7
+    num_steps: 5
+    openpi:
+      config_name: "pi05_isaaclab_stack_cube"
+      num_images_in_input: 2
+      noise_level: 0.5
     precision: ${actor.model.precision}
 
 actor:

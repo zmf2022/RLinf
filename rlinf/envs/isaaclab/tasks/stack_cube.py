@@ -45,12 +45,17 @@ class IsaaclabStackCubeEnv(IsaaclabBaseEnv):
         def make_env_isaaclab():
             import os
 
-            # Remove DISPLAY variable to force headless mode and avoid GLX errors
-            os.environ.pop("DISPLAY", None)
+            gui = bool(self.cfg.get("gui", False))
+            if not gui:
+                # Remove DISPLAY variable to force headless mode and avoid GLX errors
+                os.environ.pop("DISPLAY", None)
 
             from isaaclab.app import AppLauncher
 
-            sim_app = AppLauncher(headless=True, enable_cameras=True).app
+            launcher_kwargs = {"headless": not gui, "enable_cameras": True}
+            if gui:
+                launcher_kwargs["visualizer"] = "kit"
+            sim_app = AppLauncher(**launcher_kwargs).app
             from embodied_fusion.rlinf.isaaclab_stack_cube_rewarded import register_task
 
             register_task()
