@@ -37,7 +37,7 @@ _REWARD_SERVER_COMPONENT_NAME = "reward_server"
 def _set_run_log_path(cfg, stage: str) -> None:
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     cfg.runner.logger.log_path = str(
-        Path(cfg.runner.logger.log_path) / run_id / stage
+        Path(cfg.runner.logger.log_path) / f"{stage}-{run_id}"
     )
 
 

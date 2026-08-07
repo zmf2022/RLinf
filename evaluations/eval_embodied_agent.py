@@ -43,10 +43,8 @@ if _GUI_FLAG:
     config_name="libero_spatial_starvla_eval",
 )
 def main(cfg) -> None:
-    run_id = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     cfg.runner.logger.log_path = str(
         Path(cfg.runner.logger.log_path)
-        / run_id
         / f"eval-{datetime.now():%Y%m%d-%H%M%S-%f}"
     )
     cfg.runner.task_type = "embodied_eval"
