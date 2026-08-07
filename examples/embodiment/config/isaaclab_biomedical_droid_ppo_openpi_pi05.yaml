@@ -80,7 +80,7 @@ env:
     max_episode_steps: 448
     max_steps_per_rollout_epoch: 448
     auto_reset: true
-    ignore_terminations: true
+    ignore_terminations: false
     use_fixed_reset_state_ids: true
     seed: 42
     init_params:
