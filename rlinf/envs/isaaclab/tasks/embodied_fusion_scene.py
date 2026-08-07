@@ -23,6 +23,7 @@ for rollout, chunked stepping, metrics and worker orchestration.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import gymnasium as gym
 import torch
@@ -39,21 +40,33 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
         def make_env_isaaclab():
             # Isaac Sim must be launched in the child process, as in RLinf's
             # official IsaacLab wrapper.
-            os.environ.pop("DISPLAY", None)
+            gui = bool(self.cfg.get("gui", False))
+            if not gui:
+                os.environ.pop("DISPLAY", None)
 
             from isaaclab.app import AppLauncher
 
-            sim_app = AppLauncher(headless=True, enable_cameras=True).app
+            import embodied_fusion
+
+            project_root = Path(embodied_fusion.__file__).resolve().parents[1]
+            os.environ.setdefault("EMBODIED_FUSION_ROOT", str(project_root))
+            launcher_kwargs = {"headless": not gui, "enable_cameras": True}
+            if gui:
+                launcher_kwargs["visualizer"] = "kit"
+            sim_app = AppLauncher(**launcher_kwargs).app
             scene_config = self.cfg.init_params.get("scene_config")
             if scene_config:
-                os.environ["EMBODIED_FUSION_SCENE_CONFIG"] = os.path.expandvars(
-                    os.path.expanduser(str(scene_config))
+                scene_config_path = Path(
+                    os.path.expandvars(os.path.expanduser(str(scene_config)))
                 )
+                if not scene_config_path.is_absolute():
+                    scene_config_path = project_root / scene_config_path
+                os.environ["EMBODIED_FUSION_SCENE_CONFIG"] = str(scene_config_path)
 
             # The project registers a real ManagerBasedRLEnv task with an
             # env_cfg_entry_point. This is registration, not aliasing an
             # existing Gym task.
-            from embodied_fusion.rlinf.registration import register_isaaclab_gym_task
+            from embodied_fusion.rlinf.utils.registration import register_isaaclab_gym_task
 
             register_isaaclab_gym_task(self.isaaclab_env_id)
 
@@ -64,13 +77,6 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
             )
             isaac_env_cfg.seed = self.seed
             isaac_env_cfg.scene.num_envs = self.cfg.init_params.num_envs
-
-            for camera_name in ("wrist_cam", "table_cam"):
-                camera_cfg = getattr(isaac_env_cfg.scene, camera_name, None)
-                requested_cfg = self.cfg.init_params.get(camera_name)
-                if camera_cfg is not None and requested_cfg is not None:
-                    camera_cfg.height = requested_cfg.height
-                    camera_cfg.width = requested_cfg.width
 
             env = gym.make(
                 self.isaaclab_env_id,
@@ -88,15 +94,21 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
         main_image = policy[main_key]
         wrist_image = policy[wrist_key]
 
-        quat = policy["eef_quat"][:, [1, 2, 3, 0]]
-        states = torch.concatenate(
-            [
-                policy["eef_pos"],
-                quat2axisangle_torch(quat),
-                policy["gripper_pos"],
-            ],
-            dim=1,
-        )
+        state_interface = self.cfg.init_params.get("state_interface", "eef")
+        if state_interface == "droid_joint":
+            states = torch.concatenate(
+                [policy["joint_position"], policy["droid_gripper_position"]], dim=1
+            )
+        else:
+            quat = policy["eef_quat"][:, [1, 2, 3, 0]]
+            states = torch.concatenate(
+                [
+                    policy["eef_pos"],
+                    quat2axisangle_torch(quat),
+                    policy["gripper_pos"],
+                ],
+                dim=1,
+            )
         return {
             "main_images": main_image,
             "task_descriptions": [self.task_description] * self.num_envs,

@@ -30,6 +30,7 @@ transforms (the SFT data loader applies them upstream).
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,19 @@ def _resolve_data_kwargs(cfg):
     if data_kwargs is not None:
         data_kwargs = OmegaConf.to_container(data_kwargs, resolve=True)
     return data_kwargs
+
+
+def _resolve_norm_stats_location(data_kwargs):
+    """Return the stats root/id for checkpoints with nested asset bundles."""
+
+    if not data_kwargs or not data_kwargs.get("norm_stats_path"):
+        return None, None
+    stats_path = Path(str(data_kwargs["norm_stats_path"])).expanduser()
+    if stats_path.name == "norm_stats.json":
+        stats_dir = stats_path.parent
+    else:
+        stats_dir = stats_path
+    return str(stats_dir.parent), stats_dir.name
 
 
 def _build_eval_model(
@@ -76,8 +90,14 @@ def _build_eval_model(
             "(it selects the upstream openpi TrainConfig, e.g. 'pi05_behavior')."
         )
 
+    data_kwargs = _resolve_data_kwargs(cfg)
+    norm_stats_dir, norm_stats_asset_id = _resolve_norm_stats_location(data_kwargs)
     input_transforms, output_transforms = build_openpi_transforms(
-        cfg.model_path, config_name, data_kwargs=_resolve_data_kwargs(cfg)
+        cfg.model_path,
+        config_name,
+        data_kwargs=data_kwargs,
+        norm_stats_dir=norm_stats_dir,
+        norm_stats_asset_id=norm_stats_asset_id,
     )
 
     eval_model = OpenPiPytorchEvalActionModel(

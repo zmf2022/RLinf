@@ -13,12 +13,9 @@
 # limitations under the License.
 
 from .tasks.stack_cube import IsaaclabStackCubeEnv
-from .tasks.embodied_fusion_scene import EmbodiedFusionSceneEnv
 
 REGISTER_ISAACLAB_ENVS = {
     "Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-Rewarded-v0": IsaaclabStackCubeEnv,
-    "EmbodiedFusion-Biomedical-PickMedicineConveyor-Franka-IK-Rel-Visuomotor-Rewarded-v0": EmbodiedFusionSceneEnv,
-    "EmbodiedFusion-Scene-Franka-IK-Rel-Visuomotor-Rewarded-v0": EmbodiedFusionSceneEnv,
 }
 
 __all__ = [list(REGISTER_ISAACLAB_ENVS.keys())]

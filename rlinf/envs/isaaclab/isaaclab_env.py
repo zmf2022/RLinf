@@ -90,12 +90,15 @@ class IsaaclabBaseEnv(gym.Env):
             self.returns[:] = 0.0
             self._elapsed_steps[:] = 0
 
-    def _record_metrics(self, step_reward, terminations, infos):
+    def _record_metrics(self, step_reward, success, infos):
         episode_info = {}
         self.returns += step_reward
-        self.success_once = self.success_once | (step_reward > 0)
+        metric_success = step_reward > 0 if success is None else success
+        self.success_once = self.success_once | metric_success
         # batch level
         episode_info["success_once"] = self.success_once.clone()
+        if success is not None:
+            episode_info["success_at_end"] = success.clone()
         episode_info["return"] = self.returns.clone()
         episode_info["episode_len"] = self.elapsed_steps.clone()
         episode_info["reward"] = episode_info["return"] / episode_info["episode_len"]
@@ -117,7 +120,7 @@ class IsaaclabBaseEnv(gym.Env):
         return obs, infos
 
     def step(self, actions=None, auto_reset=True):
-        obs, step_reward, terminations, truncations, infos = self.env.step(actions)
+        obs, step_reward, terminations, truncations, task_infos = self.env.step(actions)
 
         step_reward = step_reward.clone()
         terminations = terminations.clone()
@@ -131,11 +134,11 @@ class IsaaclabBaseEnv(gym.Env):
 
         dones = terminations | truncations
 
-        infos = self._record_metrics(
-            step_reward, terminations, {}
-        )  # return infos is useless
+        success = task_infos.get("success")
+        infos = self._record_metrics(step_reward, success, {})
         if self.ignore_terminations:
-            infos["episode"]["success_at_end"] = terminations
+            if success is None:
+                infos["episode"]["success_at_end"] = terminations
             terminations[:] = False
 
         _auto_reset = auto_reset and self.auto_reset  # always False

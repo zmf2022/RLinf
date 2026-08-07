@@ -83,6 +83,12 @@ def get_env_cls(env_type: str, env_cfg=None):
             )
 
         task_id = env_cfg.init_params.id
+        if task_id.startswith("EmbodiedFusion-"):
+            from rlinf.envs.isaaclab.tasks.embodied_fusion_scene import (
+                EmbodiedFusionSceneEnv,
+            )
+
+            return EmbodiedFusionSceneEnv
         assert task_id in REGISTER_ISAACLAB_ENVS, (
             f"Task type {task_id} has not been registered! "
             f"Available tasks: {list(REGISTER_ISAACLAB_ENVS.keys())}"

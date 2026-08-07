@@ -61,7 +61,6 @@ class DroidJointPosInputs(_transforms.DataTransformFn):
             if wrist_key in data
             else np.zeros_like(base_image)
         )
-
         match self.model_type:
             case _model.ModelType.PI0 | _model.ModelType.PI05:
                 names = ("base_0_rgb", "left_wrist_0_rgb", "right_wrist_0_rgb")
@@ -94,7 +93,12 @@ class DroidJointPosInputs(_transforms.DataTransformFn):
 @dataclasses.dataclass(frozen=True)
 class DroidJointPosOutputs(_transforms.DataTransformFn):
     def __call__(self, data: dict) -> dict:
-        return {"actions": np.asarray(data["actions"][:, :8])}
+        actions = np.asarray(data["actions"][:, :8]).copy()
+        # DROID's eighth action is a binary gripper command.  Keep the
+        # conversion at the OpenPI output boundary, matching sim-evals,
+        # before RLinf dispatches the action chunk to IsaacLab.
+        actions[..., -1] = (actions[..., -1] > 0.5).astype(actions.dtype)
+        return {"actions": actions}
 
 
 @dataclasses.dataclass(frozen=True)

@@ -65,7 +65,14 @@ def build_openpi_transforms(
         if norm_stats_dir is not None
         else download.maybe_download(str(model_path))
     )
-    norm_stats = _checkpoints.load_norm_stats(stats_dir, asset_id)
+    # ``DataConfigFactory.create_base_config`` has already loaded the same
+    # stats while constructing ``data_config``. Reuse that object to avoid a
+    # second file read and duplicate "Loaded norm stats" log line. The
+    # explicit load remains the fallback for configs that do not expose stats
+    # through ``data_config.norm_stats``.
+    norm_stats = data_config.norm_stats
+    if norm_stats is None:
+        norm_stats = _checkpoints.load_norm_stats(stats_dir, asset_id)
     if norm_stats is None:
         raise FileNotFoundError(
             f"openpi_pytorch: norm_stats not found at {stats_dir}/{asset_id}/"
