@@ -101,7 +101,7 @@ rollout:
   model:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
     model_type: openpi_pytorch
-    num_action_chunks: 8
+    num_action_chunks: 16
     action_dim: 8
     num_steps: 5
     openpi:
@@ -129,7 +129,7 @@ actor:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
     model_type: openpi_pytorch
     action_dim: 8
-    num_action_chunks: 8
+    num_action_chunks: 16
     num_steps: 5
     add_value_head: true
     openpi:
