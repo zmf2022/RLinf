@@ -122,7 +122,7 @@ actor:
   group_name: ActorGroup
   training_backend: fsdp
   micro_batch_size: 32
-  global_batch_size: 256
+  global_batch_size: 64
   seed: 42
   enable_offload: false
   model:
