@@ -64,9 +64,9 @@ env:
   group_name: EnvGroup
   train:
     rollout_epoch: 2
-    total_num_envs: 4
-    max_episode_steps: 448
-    max_steps_per_rollout_epoch: 448
+    total_num_envs: 8
+    max_episode_steps: 450
+    max_steps_per_rollout_epoch: 450
     use_fixed_reset_state_ids: true
     seed: 42
     init_params:
@@ -76,9 +76,9 @@ env:
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
   eval:
     rollout_epoch: 1
-    total_num_envs: 4
-    max_episode_steps: 448
-    max_steps_per_rollout_epoch: 448
+    total_num_envs: 8
+    max_episode_steps: 450
+    max_steps_per_rollout_epoch: 450
     auto_reset: true
     ignore_terminations: false
     use_fixed_reset_state_ids: true
@@ -101,7 +101,8 @@ rollout:
   model:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
     model_type: openpi_pytorch
-    num_action_chunks: 16
+    precision: bf16
+    num_action_chunks: 10
     action_dim: 8
     num_steps: 5
     openpi:
@@ -116,27 +117,30 @@ rollout:
       max_token_len: 200
     openpi_data:
       norm_stats_path: ${..model_path}/physical-intelligence/behavior/norm_stats.json
-    precision: ${actor.model.precision}
 
 actor:
   group_name: ActorGroup
   training_backend: fsdp
-  micro_batch_size: 4
-  global_batch_size: 32
+  micro_batch_size: 8
+  global_batch_size: 40
   seed: 42
   enable_offload: false
   model:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
     model_type: openpi_pytorch
+    precision: bf16
     action_dim: 8
-    num_action_chunks: 16
-    num_steps: 5
+    num_action_chunks: 10
+    num_steps: 8
     add_value_head: true
     openpi:
       task: rl
       config_name: pi05_droid_polaris
       num_images_in_input: 2
-      noise_level: 0.5
+      noise_level: 0.4
+      noise_method: flow_sde
+      ignore_last: true
+      train_expert_only: true
       joint_logprob: false
       num_steps: ${actor.model.num_steps}
       action_env_dim: 8
@@ -161,11 +165,12 @@ actor:
   fsdp_config:
     strategy: fsdp
     sharding_strategy: no_shard
+    use_orig_params: true
     gradient_checkpointing: false
     mixed_precision:
-      param_dtype: ${actor.model.precision}
-      reduce_dtype: ${actor.model.precision}
-      buffer_dtype: ${actor.model.precision}
+      param_dtype: bf16
+      reduce_dtype: bf16
+      buffer_dtype: bf16
 
 reward:
   use_reward_model: false

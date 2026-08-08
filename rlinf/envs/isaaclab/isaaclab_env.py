@@ -73,6 +73,10 @@ class IsaaclabBaseEnv(gym.Env):
         self.success_once = torch.zeros(self.num_envs, dtype=bool).to(self.device)
         self.fail_once = torch.zeros(self.num_envs, dtype=bool).to(self.device)
         self.returns = torch.zeros(self.num_envs).to(self.device)
+        self._rollout_done = torch.zeros(self.num_envs, dtype=bool).to(self.device)
+        self._terminal_success = torch.zeros(self.num_envs, dtype=bool).to(
+            self.device
+        )
 
     def _reset_metrics(self, env_idx=None):
         if env_idx is not None:
@@ -83,12 +87,16 @@ class IsaaclabBaseEnv(gym.Env):
             self.fail_once[mask] = False
             self.returns[mask] = 0
             self._elapsed_steps[env_idx] = 0
+            self._rollout_done[mask] = False
+            self._terminal_success[mask] = False
         else:
             self.prev_step_reward[:] = 0
             self.success_once[:] = False
             self.fail_once[:] = False
             self.returns[:] = 0.0
             self._elapsed_steps[:] = 0
+            self._rollout_done[:] = False
+            self._terminal_success[:] = False
 
     def _record_metrics(self, step_reward, success, infos):
         episode_info = {}
@@ -120,6 +128,8 @@ class IsaaclabBaseEnv(gym.Env):
         return obs, infos
 
     def step(self, actions=None, auto_reset=True):
+        first_episode_only = not self.auto_reset and not self.ignore_terminations
+        active = ~self._rollout_done if first_episode_only else None
         obs, step_reward, terminations, truncations, task_infos = self.env.step(actions)
 
         step_reward = step_reward.clone()
@@ -128,14 +138,28 @@ class IsaaclabBaseEnv(gym.Env):
 
         obs = self._wrap_obs(obs)
 
-        self._elapsed_steps += 1
+        if first_episode_only:
+            step_reward = torch.where(active, step_reward, 0.0)
+            terminations &= active
+            truncations &= active
+            self._elapsed_steps[active] += 1
+        else:
+            self._elapsed_steps += 1
 
         truncations = (self.elapsed_steps >= self.cfg.max_episode_steps) | truncations
+        if first_episode_only:
+            truncations &= active
 
         dones = terminations | truncations
 
         success = task_infos.get("success")
+        if success is not None and first_episode_only:
+            success = success & active
+            self._terminal_success |= success
+            success = self._terminal_success
         infos = self._record_metrics(step_reward, success, {})
+        if first_episode_only:
+            self._rollout_done |= dones
         if self.ignore_terminations:
             if success is None:
                 infos["episode"]["success_at_end"] = terminations
