@@ -64,7 +64,7 @@ env:
   group_name: EnvGroup
   train:
     rollout_epoch: 2
-    total_num_envs: 8
+    total_num_envs: 4
     max_episode_steps: 448
     max_steps_per_rollout_epoch: 448
     use_fixed_reset_state_ids: true
@@ -76,7 +76,7 @@ env:
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
   eval:
     rollout_epoch: 1
-    total_num_envs: 8
+    total_num_envs: 4
     max_episode_steps: 448
     max_steps_per_rollout_epoch: 448
     auto_reset: true
@@ -121,8 +121,8 @@ rollout:
 actor:
   group_name: ActorGroup
   training_backend: fsdp
-  micro_batch_size: 16
-  global_batch_size: 64
+  micro_batch_size: 4
+  global_batch_size: 32
   seed: 42
   enable_offload: false
   model:
