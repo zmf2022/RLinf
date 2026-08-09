@@ -77,6 +77,13 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
             )
             isaac_env_cfg.seed = self.seed
             isaac_env_cfg.scene.num_envs = self.cfg.init_params.num_envs
+            for camera_name in ("table_cam", "wrist_cam"):
+                camera_params = self.cfg.init_params.get(camera_name)
+                camera_cfg = getattr(isaac_env_cfg.scene, camera_name, None)
+                if camera_params is None or camera_cfg is None:
+                    continue
+                camera_cfg.height = int(camera_params.height)
+                camera_cfg.width = int(camera_params.width)
 
             env = gym.make(
                 self.isaaclab_env_id,
