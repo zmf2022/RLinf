@@ -63,8 +63,10 @@ algorithm:
 env:
   group_name: EnvGroup
   train:
-    rollout_epoch: 2
+    rollout_epoch: 3
     total_num_envs: 8
+    auto_reset: true
+    ignore_terminations: false
     max_episode_steps: 448
     max_steps_per_rollout_epoch: 448
     use_fixed_reset_state_ids: true
