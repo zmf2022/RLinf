@@ -63,27 +63,28 @@ algorithm:
 env:
   group_name: EnvGroup
   train:
-    rollout_epoch: 3
-    total_num_envs: 8
-    auto_reset: true
+    rollout_epoch: 2
+    total_num_envs: 32
+    auto_reset: false
     ignore_terminations: false
-    max_episode_steps: 448
-    max_steps_per_rollout_epoch: 448
+    max_episode_steps: 320
+    max_steps_per_rollout_epoch: 320
     use_fixed_reset_state_ids: true
     seed: 42
     init_params:
       id: EmbodiedFusion-Biomedical-PickMedicineConveyor-Franka-DROID-JointPos-v0
       state_interface: droid_joint
       scene_config: embodied_fusion/rlinf/config/scenes/biomedical.yaml
+      disable_background: true
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
-      table_cam: {height: 720, width: 1280}
-      wrist_cam: {height: 720, width: 1280}
+      table_cam: {height: 256, width: 256}
+      wrist_cam: {height: 256, width: 256}
   eval:
     rollout_epoch: 1
     total_num_envs: 8
-    max_episode_steps: 448
-    max_steps_per_rollout_epoch: 448
-    auto_reset: true
+    max_episode_steps: 320
+    max_steps_per_rollout_epoch: 320
+    auto_reset: false
     ignore_terminations: true
     use_fixed_reset_state_ids: true
     seed: 42
@@ -91,9 +92,10 @@ env:
       id: EmbodiedFusion-Biomedical-PickMedicineConveyor-Franka-DROID-JointPos-v0
       state_interface: droid_joint
       scene_config: embodied_fusion/rlinf/config/scenes/biomedical.yaml
+      terminate_on_success: false
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
-      table_cam: {height: 720, width: 1280}
-      wrist_cam: {height: 720, width: 1280}
+      table_cam: {height: 256, width: 256}
+      wrist_cam: {height: 256, width: 256}
     video_cfg:
       save_video: true
       info_on_video: true
@@ -102,7 +104,7 @@ env:
 rollout:
   group_name: RolloutGroup
   backend: huggingface
-  enable_offload: true
+  enable_offload: false
   pipeline_stage_num: 1
   model:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
@@ -128,7 +130,7 @@ actor:
   group_name: ActorGroup
   training_backend: fsdp
   micro_batch_size: 4
-  global_batch_size: 64
+  global_batch_size: 160
   seed: 42
   enable_offload: false
   model:
@@ -160,7 +162,7 @@ actor:
     openpi_data:
       norm_stats_path: ${..model_path}/physical-intelligence/behavior/norm_stats.json
   optim:
-    lr: 5.0e-6
+    lr: 2.0e-6
     value_lr: 1.0e-4
     adam_beta1: 0.9
     adam_beta2: 0.95

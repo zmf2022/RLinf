@@ -62,6 +62,10 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
                 if not scene_config_path.is_absolute():
                     scene_config_path = project_root / scene_config_path
                 os.environ["EMBODIED_FUSION_SCENE_CONFIG"] = str(scene_config_path)
+            if bool(self.cfg.init_params.get("disable_background", False)):
+                os.environ["EMBODIED_FUSION_DISABLE_BACKGROUND"] = "1"
+            else:
+                os.environ.pop("EMBODIED_FUSION_DISABLE_BACKGROUND", None)
 
             # The project registers a real ManagerBasedRLEnv task with an
             # env_cfg_entry_point. This is registration, not aliasing an
@@ -75,6 +79,21 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
             isaac_env_cfg = load_cfg_from_registry(
                 self.isaaclab_env_id, "env_cfg_entry_point"
             )
+            if not bool(self.cfg.init_params.get("terminate_on_success", True)):
+                success_term = getattr(isaac_env_cfg.terminations, "success", None)
+                if success_term is not None:
+                    # Keep the task's exact success predicate for RLinf
+                    # metrics, but do not let ManagerBasedRLEnv reset the
+                    # object in the same step during visual evaluation.
+                    isaac_env_cfg.success_metric = success_term.func
+                    isaac_env_cfg.success_metric_params = dict(success_term.params)
+                    isaac_env_cfg.terminations.success = None
+            if bool(self.cfg.init_params.get("disable_background", False)):
+                # The training scene must not instantiate the clinic USD at
+                # all. Removing it from the final IsaacLab config is the
+                # authoritative boundary; the environment-variable hint is
+                # only used while parsing the generic scene specification.
+                isaac_env_cfg.scene.background = None
             isaac_env_cfg.seed = self.seed
             isaac_env_cfg.scene.num_envs = self.cfg.init_params.num_envs
             for camera_name in ("table_cam", "wrist_cam"):
