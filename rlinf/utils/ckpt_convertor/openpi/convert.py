@@ -14,11 +14,12 @@
 
 """Unified OpenPI 0.5 checkpoint convertor.
 
-Dispatches to one of five modes over a shared core:
+Dispatches to one of six modes over a shared core:
 
     jax2new     JAX Pi0/Pi05 checkpoint -> new self-contained PyTorch layout
     old2new     old paligemma_with_expert.* -> new bare Pi0 layout
     sft2new     RLinf SFT full_weights.pt -> new bare Pi0 layout (bf16)
+    rl2new      RLinf PPO full_weights.pt -> new bare Pi0 layout (bf16)
     new2old     new bare Pi0 layout -> old paligemma_with_expert.* layout
     sft2deploy  openpi_pytorch SFT -> legacy openpi deploy full_weights.pt
 
@@ -41,6 +42,7 @@ from rlinf.utils.ckpt_convertor.openpi import (
     jax2new,
     new2old,
     old2new,
+    rl2new,
     sft2deploy,
     sft2new,
 )
@@ -48,6 +50,7 @@ from rlinf.utils.ckpt_convertor.openpi import (
 _MODES = {
     "jax2new": jax2new,
     "old2new": old2new,
+    "rl2new": rl2new,
     "sft2new": sft2new,
     "new2old": new2old,
     "sft2deploy": sft2deploy,
