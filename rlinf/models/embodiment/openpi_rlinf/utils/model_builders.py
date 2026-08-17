@@ -34,6 +34,8 @@ from pathlib import Path
 
 from rlinf.models.embodiment.openpi_rlinf.utils.rlt_utils import build_rlt_config
 
+from rlinf.models.embodiment.openpi_rlinf.utils.rlt_utils import build_rlt_config
+
 logger = logging.getLogger(__name__)
 
 

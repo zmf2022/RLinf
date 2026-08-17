@@ -15,6 +15,7 @@
 import torch
 from omegaconf import DictConfig
 
+from .musa_patches import apply_musa_patches, restore_musa_patches
 from .npu_patches import apply_npu_patches, restore_npu_patches
 
 
@@ -67,9 +68,11 @@ def get_model(cfg: DictConfig, torch_dtype=torch.bfloat16):
         "rlinf.models.embodiment.gr00t.embodiment_tags.EMBODIMENT_TAG_MAPPING",
     )
 
-    # Register the Ascend-specific patches (no-op off NPU) before applying, and
-    # restore the process-global ones once model construction finishes.
+    # Register the accelerator-specific patches (each a no-op off its own
+    # platform) before applying, and restore the process-global ones once model
+    # construction finishes.
     npu_patch_state = apply_npu_patches(Patcher)
+    musa_patch_state = apply_musa_patches(Patcher)
     Patcher.apply()
     try:
         _patch_transformers_for_isaac_gr00t()
@@ -117,6 +120,7 @@ def get_model(cfg: DictConfig, torch_dtype=torch.bfloat16):
         )
     finally:
         restore_npu_patches(Patcher, npu_patch_state)
+        restore_musa_patches(Patcher, musa_patch_state)
 
     model.to(torch_dtype)
     if cfg.rl_head_config.add_value_head:
