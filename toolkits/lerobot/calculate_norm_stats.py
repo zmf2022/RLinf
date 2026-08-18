@@ -41,10 +41,26 @@ def create_torch_dataloader(
     model_config: _model.BaseModelConfig,
     num_workers: int,
     max_frames: int | None = None,
+    video_backend: str = "pyav",
 ) -> tuple[_data_loader.TorchDataLoader, int]:
     if data_config.repo_id is None:
         raise ValueError("Data config must have a repo_id")
-    dataset = _data_loader.create_torch_dataset(
+
+    # OpenPI's stock factory does not expose LeRobot's video_backend argument.
+    # Keep the official OpenPI transforms and loader, but use the same PyAV
+    # DROID dataset adapter as RLinf SFT so AV1 data does not import TorchCodec.
+    if video_backend == "pyav":
+        from rlinf.data.datasets.openpi_rlinf.droid_sft_data_loader import (
+            _create_pyav_droid_dataset,
+            _ensure_openpi_lerobot_import,
+        )
+
+        _ensure_openpi_lerobot_import()
+        dataset_factory = _create_pyav_droid_dataset
+    else:
+        dataset_factory = _data_loader.create_torch_dataset
+
+    dataset = dataset_factory(
         data_config, action_horizon, model_config
     )
     dataset = _data_loader.TransformedDataset(
@@ -106,6 +122,7 @@ def create_rlds_dataloader(
 def main(
     config_name: str,
     repo_id: str,
+    video_backend: str = "pyav",
 ):
     dataset_root = resolve_lerobot_dataset_root(repo_id)
     if not (dataset_root / "meta" / "info.json").is_file():
@@ -132,6 +149,7 @@ def main(
             config.batch_size,
             config.model,
             config.num_workers,
+            video_backend=video_backend,
         )
 
     keys = ["state", "actions"]

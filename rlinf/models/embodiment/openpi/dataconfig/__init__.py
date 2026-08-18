@@ -37,6 +37,9 @@ from rlinf.models.embodiment.openpi.dataconfig.calvin_dataconfig import (
 from rlinf.models.embodiment.openpi.dataconfig.dual_franka_tcp_rot6d_dataconfig import (
     DualFrankaTcpRot6dDataConfig,
 )
+from rlinf.models.embodiment.openpi.dataconfig.droid_dataconfig import (
+    LeRobotDROIDAbsDataConfig,
+)
 from rlinf.models.embodiment.openpi.dataconfig.franka_co_training_dataconfig import (
     LeRobotFrankaEEDataConfig,
 )
@@ -580,6 +583,24 @@ _CONFIGS = [
             assets=AssetsConfig(asset_id="assets/droid"),
         ),
         pytorch_weight_path="checkpoints/torch/pi05_droid_polaris",
+    ),
+    TrainConfig(
+        name="pi05_droid_finetune_abs",
+        model=pi0_config.Pi0Config(
+            pi05=True,
+            action_dim=32,
+            action_horizon=15,
+            max_token_len=200,
+        ),
+        data=LeRobotDROIDAbsDataConfig(
+            repo_id="physical-intelligence/droid",
+            base_config=DataConfig(prompt_from_task=True),
+            assets=AssetsConfig(
+                assets_dir="checkpoints/torch/pi05_droid/assets",
+                asset_id="droid",
+            ),
+        ),
+        pytorch_weight_path="checkpoints/torch/pi05_droid",
     ),
 ]
 

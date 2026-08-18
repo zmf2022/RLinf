@@ -35,6 +35,14 @@ def _load_dual_franka_sft_dataloader() -> SftDataLoaderBuilder:
     return build_dual_franka_sft_dataloader
 
 
+def _load_droid_sft_dataloader() -> SftDataLoaderBuilder:
+    from rlinf.data.datasets.openpi_rlinf.droid_sft_data_loader import (
+        build_droid_sft_dataloader,
+    )
+
+    return build_droid_sft_dataloader
+
+
 def _load_official_openpi_sft_dataloader() -> SftDataLoaderBuilder:
     from rlinf.data.datasets.openpi_rlinf.official_sft_data_loader import (
         build_official_openpi_sft_dataloader,
@@ -47,6 +55,7 @@ def _load_official_openpi_sft_dataloader() -> SftDataLoaderBuilder:
 _SFT_DATALOADER_BUILDERS = {
     "behavior": _load_behavior_sft_dataloader,
     "dualfranka": _load_dual_franka_sft_dataloader,
+    "droid": _load_droid_sft_dataloader,
     "robotwin": _load_official_openpi_sft_dataloader,
 }
 
