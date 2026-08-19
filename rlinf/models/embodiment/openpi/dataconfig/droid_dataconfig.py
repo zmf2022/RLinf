@@ -34,6 +34,18 @@ class LegacyLeRobotDROIDInputs(_transforms.DataTransformFn):
         official_data = dict(data)
         official_data["observation/joint_position"] = state[:7]
         official_data["observation/gripper_position"] = state[7:8]
+        # Eval/RL env observations arrive under the standardized RLinf keys
+        # (``observation/image`` / ``observation/wrist_image``); rename them to
+        # the official DROID keys DroidInputs consumes. Dataset samples already
+        # carry the official keys after RepackTransform, so those pass through.
+        if "observation/image" in official_data:
+            official_data["observation/exterior_image_1_left"] = official_data.pop(
+                "observation/image"
+            )
+        if "observation/wrist_image" in official_data:
+            official_data["observation/wrist_image_left"] = official_data.pop(
+                "observation/wrist_image"
+            )
         return _droid_policy.DroidInputs(model_type=self.model_type)(official_data)
 
 

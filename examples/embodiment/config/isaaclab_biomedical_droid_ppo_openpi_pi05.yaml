@@ -1,8 +1,8 @@
 defaults:
   - env/isaaclab_stack_cube@env.train
   - env/isaaclab_stack_cube@env.eval
-  - model/pi0_5_pytorch@actor.model
-  - model/pi0_5_pytorch@rollout.model
+  - model/pi0_5_rlinf@actor.model
+  - model/pi0_5_rlinf@rollout.model
   - hybrid_engines/fsdp@actor.fsdp_config
   - weight_syncer/patch_syncer@weight_syncer
   - override hydra/job_logging: stdout
@@ -76,6 +76,8 @@ env:
       state_interface: droid_joint
       scene_config: embodied_fusion/rlinf/config/scenes/biomedical.yaml
       disable_background: true
+      main_image_key: external_camera
+      wrist_image_key: wrist_camera
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
       table_cam: {height: 256, width: 256}
       wrist_cam: {height: 256, width: 256}
@@ -83,7 +85,7 @@ env:
     rollout_epoch: 1
     total_num_envs: 8
     max_episode_steps: 320
-    max_steps_per_rollout_epoch: 320
+    max_steps_per_rollout_epoch: 300
     auto_reset: false
     ignore_terminations: true
     use_fixed_reset_state_ids: true
@@ -93,6 +95,8 @@ env:
       state_interface: droid_joint
       scene_config: embodied_fusion/rlinf/config/scenes/biomedical.yaml
       terminate_on_success: false
+      main_image_key: external_camera
+      wrist_image_key: wrist_camera
       task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
       table_cam: {height: 256, width: 256}
       wrist_cam: {height: 256, width: 256}
