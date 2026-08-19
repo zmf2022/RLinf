@@ -26,7 +26,7 @@ runner:
   max_epochs: -1
   max_steps: 20000
   val_check_interval: -1
-  save_interval: 2000
+  save_interval: 5000
 
 data:
   train_data_paths: /mnt/datadisk/datasets/lerobot/embodied_fusion/biomedical_droid_abs
