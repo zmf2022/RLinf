@@ -214,6 +214,15 @@ Pi0 RoboTwin 使用对应的配置名：
 日志与 checkpoint。checkpoint 每 ``runner.save_interval`` 步保存一次，位于
 ``.../checkpoints/global_step_<N>/`` 下。
 
+脚本的第二个参数可以显式指定输出根目录；省略时使用默认的时间戳目录：
+
+.. code:: bash
+
+   bash examples/sft/run_vla_sft.sh behavior_pi05_vla /path/to/output
+
+此时 checkpoint 位于
+``/path/to/output/behavior_pi05_vla/checkpoints/global_step_<N>/``。
+
 
 转换 checkpoint 用于评估
 ------------------------
