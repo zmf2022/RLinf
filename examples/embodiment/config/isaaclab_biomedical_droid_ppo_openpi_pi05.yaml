@@ -67,8 +67,8 @@ env:
     total_num_envs: 32
     auto_reset: false
     ignore_terminations: false
-    max_episode_steps: 320
-    max_steps_per_rollout_epoch: 320
+    max_episode_steps: 600
+    max_steps_per_rollout_epoch: 600
     use_fixed_reset_state_ids: true
     seed: 42
     init_params:
@@ -78,14 +78,14 @@ env:
       disable_background: true
       main_image_key: external_camera
       wrist_image_key: wrist_camera
-      task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
-      table_cam: {height: 256, width: 256}
-      wrist_cam: {height: 256, width: 256}
+      task_description: Pick one medicine bottle from the open carton, grasp it securely with the DROID gripper, lift it clear of the carton, rotate it upright, place it within the valid region of the conveyor belt, release it, and return the arm to its home pose.
+      external_camera: {height: 480, width: 640}
+      wrist_camera: {height: 480, width: 640}
   eval:
     rollout_epoch: 1
     total_num_envs: 8
-    max_episode_steps: 320
-    max_steps_per_rollout_epoch: 300
+    max_episode_steps: 600
+    max_steps_per_rollout_epoch: 600
     auto_reset: false
     ignore_terminations: true
     use_fixed_reset_state_ids: true
@@ -97,9 +97,9 @@ env:
       terminate_on_success: false
       main_image_key: external_camera
       wrist_image_key: wrist_camera
-      task_description: Pick a plastic bottle from the wooden crate and place it on the gray conveyor belt in front of the robot.
-      table_cam: {height: 256, width: 256}
-      wrist_cam: {height: 256, width: 256}
+      task_description: Pick one medicine bottle from the open carton, grasp it securely with the DROID gripper, lift it clear of the carton, rotate it upright, place it within the valid region of the conveyor belt, release it, and return the arm to its home pose.
+      external_camera: {height: 480, width: 640}
+      wrist_camera: {height: 480, width: 640}
     video_cfg:
       save_video: true
       info_on_video: true
@@ -112,15 +112,15 @@ rollout:
   pipeline_stage_num: 1
   model:
     model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
-    model_type: openpi_pytorch
+    model_type: openpi_rlinf
     precision: bf16
-    num_action_chunks: 8
+    num_action_chunks: 15
     action_dim: 8
     num_steps: 5
     openpi:
       task: eval
-      config_name: pi05_droid_polaris
-      num_images_in_input: 2
+      config_name: pi05_droid_finetune_abs
+      num_images_in_input: 3
       noise_level: 0.5
       action_env_dim: 8
       model_action_dim: 32
@@ -128,7 +128,7 @@ rollout:
       action_expert_variant: gemma_300m
       max_token_len: 200
     openpi_data:
-      norm_stats_path: ${..model_path}/physical-intelligence/behavior/norm_stats.json
+      norm_stats_path: ${..model_path}/physical-intelligence/droid/norm_stats.json
 
 actor:
   group_name: ActorGroup

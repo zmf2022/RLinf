@@ -96,7 +96,14 @@ class EmbodiedFusionSceneEnv(IsaaclabBaseEnv):
                 isaac_env_cfg.scene.background = None
             isaac_env_cfg.seed = self.seed
             isaac_env_cfg.scene.num_envs = self.cfg.init_params.num_envs
-            for camera_name in ("table_cam", "wrist_cam"):
+            # Support both the generic RLinf camera aliases and the concrete
+            # camera names exposed by the biomedical DROID observation group.
+            for camera_name in (
+                "table_cam",
+                "wrist_cam",
+                "external_camera",
+                "wrist_camera",
+            ):
                 camera_params = self.cfg.init_params.get(camera_name)
                 camera_cfg = getattr(isaac_env_cfg.scene, camera_name, None)
                 if camera_params is None or camera_cfg is None:
