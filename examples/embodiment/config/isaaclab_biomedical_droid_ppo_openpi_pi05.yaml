@@ -111,7 +111,7 @@ rollout:
   enable_offload: false
   pipeline_stage_num: 1
   model:
-    model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
+    model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/biomedical_droid_pi05_sft_step20000}
     model_type: openpi_rlinf
     precision: bf16
     num_action_chunks: 15
@@ -121,6 +121,7 @@ rollout:
       task: eval
       config_name: pi05_droid_finetune_abs
       num_images_in_input: 3
+      discrete_state_input: true
       noise_level: 0.5
       action_env_dim: 8
       model_action_dim: 32
@@ -138,18 +139,19 @@ actor:
   seed: 42
   enable_offload: false
   model:
-    model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/pi05_droid_pytorch}
-    model_type: openpi_pytorch
+    model_path: ${oc.env:RLINF_DROID_PI05_MODEL_PATH,/mnt/datadisk/models/RLinf/biomedical_droid_pi05_sft_step20000}
+    model_type: openpi_rlinf
     precision: bf16
     action_dim: 8
-    num_action_chunks: 8
+    num_action_chunks: 15
     num_steps: 5
     add_value_head: true
     openpi:
       task: rl
-      config_name: pi05_droid_polaris
-      num_images_in_input: 2
-      noise_level: 0.4
+      config_name: pi05_droid_finetune_abs
+      num_images_in_input: 3
+      discrete_state_input: true
+      noise_level: 0.5
       noise_method: flow_sde
       ignore_last: true
       train_expert_only: true
@@ -164,7 +166,7 @@ actor:
       value_vlm_mode: mean_token
       detach_critic_input: true
     openpi_data:
-      norm_stats_path: ${..model_path}/physical-intelligence/behavior/norm_stats.json
+      norm_stats_path: ${..model_path}/physical-intelligence/droid/norm_stats.json
   optim:
     lr: 2.0e-6
     value_lr: 1.0e-4
